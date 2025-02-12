@@ -44,7 +44,17 @@ class App {
     this.editTaskContainer = document.querySelector(".edit-container");
     this.closeBtn = document.querySelector(".close-icon");
 
+    this.closeIcon = document.querySelector(".close-icon");
+
     this.clearBtn = document.querySelector(".clear-btn");
+
+    window.addEventListener("keydown", (e) => {
+      if (this.overlay.classList.contains("active")) {
+        if (e.key === "Escape") this.closeModal();
+
+        document.activeElement.blur();
+      }
+    });
 
     this.addBtn.addEventListener("click", () => {
       this.handleAddTask();
@@ -152,11 +162,13 @@ class App {
   closeModal() {
     this.overlay.classList.remove("active");
     this.editTaskContainer.classList.remove("active");
+    this.closeIcon.classList.remove("active");
   }
 
   openModal() {
     this.overlay.classList.add("active");
     this.editTaskContainer.classList.add("active");
+    this.closeIcon.classList.add("active");
   }
 
   render() {
@@ -165,16 +177,55 @@ class App {
     if (this.taskList.tasks.length === 0) return;
 
     this.taskList.tasks.forEach((task, i) => {
-      const HTML = `<div class="task-container ${task.status === "done" ? "completed" : ""}" data-task-id="${i}">
-                    <p class="task-paragraph">${task.task}</p>
-                    <div class="buttons-container">
-                      <button class="buttons-container-btn toggle-btn">Toggle</button>
-                      <button class="buttons-container-btn edit-btn">Edit</button>
-                      <button class="buttons-container-btn delete-btn">Delete</button>
-                    </div>
-                  </div>`;
+      // const HTML = `
+      //             <div class="task-container ${task.status === "done" ? "completed" : ""}" data-task-id="${i}">
+      //               <p class="task-paragraph">${task.task}</p>
+      //               <div class="buttons-container">
+      //                 <button class="buttons-container-btn toggle-btn">Toggle</button>
+      //                 <button class="buttons-container-btn edit-btn">Edit</button>
+      //                 <button class="buttons-container-btn delete-btn">Delete</button>
+      //               </div>
+      //             </div>`;
+      //
+      // this.taskListContainer.insertAdjacentHTML("afterbegin", HTML);
 
-      this.taskListContainer.insertAdjacentHTML("afterbegin", HTML);
+      const taskDiv = document.createElement("div");
+      taskDiv.classList.add("task-container");
+      if (task.status === "done") taskDiv.classList.add("completed");
+      taskDiv.dataset.taskId = i;
+
+      const taskParagraph = document.createElement("p");
+      taskParagraph.classList.add("task-paragraph");
+
+      if (task.task.length > 25)
+        taskParagraph.textContent = task.task.slice(0, 22) + "...";
+      else taskParagraph.textContent = task.task;
+
+      taskParagraph.title = task.task;
+
+      taskDiv.appendChild(taskParagraph);
+
+      const btnDiv = document.createElement("div");
+      btnDiv.classList.add("buttons-container");
+
+      const btnTexts = ["Toggle", "Edit", "Delete"];
+
+      btnTexts.forEach((text) => {
+        const btn = document.createElement("button");
+        btn.textContent = text;
+
+        btn.classList.add("buttons-container-btn");
+
+        if (btn.textContent === "Toggle") btn.classList.add("toggle-btn");
+        else if (btn.textContent === "Edit") btn.classList.add("edit-btn");
+        else if (btn.textContent === "Delete") btn.classList.add("delete-btn");
+
+        btnDiv.appendChild(btn);
+      });
+
+      taskDiv.append(btnDiv);
+
+      this.taskListContainer.append(taskDiv);
     });
   }
 }

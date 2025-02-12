@@ -1,3 +1,4 @@
+/* === Global Styles === */
 * {
   padding: 0;
   margin: 0;
@@ -6,21 +7,21 @@
 }
 
 html {
-  /*font-size: 10px;*/
   font-size: 62.5%;
 }
 
 body {
-  line-height: 1;
-  font-weight: 400;
   background-color: #050814;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   height: 100vh;
+  font-weight: 400;
+  line-height: 1;
 }
 
+/* === Containers === */
 .centered-container {
   width: 62rem;
   height: 62rem;
@@ -30,6 +31,20 @@ body {
   gap: 4rem;
 }
 
+.todo-list-container {
+  width: 100%;
+  height: 100%;
+  background-color: #050814;
+  box-shadow: 0 0 40px 1px #7284d8;
+  padding: 2rem;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+}
+
+/* === Typography === */
 h1,
 h2 {
   font-size: 4rem;
@@ -42,19 +57,7 @@ h2 {
   margin-top: 1.2rem;
 }
 
-.todo-list-container {
-  background-color: #050814;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2rem;
-  height: 100%;
-  width: 100%;
-  box-shadow: 0 0 40px 1px #7284d8;
-  padding: 2rem;
-  border-radius: 20px;
-}
-
+/* === Input & Buttons === */
 .input-container {
   display: flex;
   align-items: center;
@@ -62,7 +65,8 @@ h2 {
   gap: 1rem;
 }
 
-.task-input, .edit-task-input {
+.task-input,
+.edit-task-input {
   width: 34rem;
   height: 3rem;
   border-radius: 1rem;
@@ -71,20 +75,13 @@ h2 {
   font-size: 2rem;
 }
 
-.edit-task-input {
-  grid-column: 1/-2;
-}
-
-.ok-btn {
-  grid-column: 2/-1;
-  grid-row: 2/3;
-}
-
-.task-input:focus, .edit-task-input:focus {
+.task-input:focus,
+.edit-task-input:focus {
   outline: none;
 }
 
-.add-btn, .ok-btn {
+.add-btn,
+.ok-btn {
   width: 6rem;
   height: 3rem;
   text-transform: uppercase;
@@ -97,26 +94,29 @@ h2 {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
   cursor: pointer;
+  transition: all 0.2s;
 }
 
-.add-btn:hover, .ok-btn:hover {
+.add-btn:hover,
+.ok-btn:hover {
   background-color: #4a61cd;
 }
 
+/* === Task List === */
 .task-list-container {
   width: 100%;
+  height: 70%;
+  padding: 1.2rem;
   display: flex;
   flex-direction: column;
   gap: 2.8rem;
   overflow-y: scroll;
-  height: 70%;
-  padding: 1.2rem;
-
+  scrollbar-width: thin;
+  scrollbar-color: #364fc7 transparent;
 }
 
-
+/* Scrollbar */
 .task-list-container::-webkit-scrollbar {
   width: 10px;
 }
@@ -131,11 +131,7 @@ h2 {
   border-radius: 10px;
 }
 
-.task-list-container {
-  scrollbar-width: thin;
-  scrollbar-color: #364fc7 transparent;
-}
-
+/* === Task Items === */
 .task-container {
   display: flex;
   align-items: center;
@@ -149,8 +145,20 @@ h2 {
 .task-paragraph {
   color: #ebedf9;
   font-size: 2.4rem;
+  max-width: 20rem;
 }
 
+/* Completed Task */
+.completed .task-paragraph {
+  text-decoration: line-through;
+  opacity: 0.6;
+}
+
+.completed {
+  box-shadow: 0 0 7px 1px #20d420;
+}
+
+/* === Buttons Container === */
 .buttons-container {
   display: flex;
   gap: 1rem;
@@ -160,34 +168,46 @@ h2 {
   color: #c3caee;
   background-color: transparent;
   border: none;
-  text-transform: uppercase;
   font-size: 1.6rem;
   padding: 0.4rem;
   border-radius: 1rem;
-  transition: all 0.2s;
+  text-transform: uppercase;
   display: flex;
   align-items: center;
   justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
 .buttons-container-btn:hover {
-  cursor: pointer;
   background-color: #10183c;
 }
 
-.completed .task-paragraph {
-  text-decoration: line-through;
-  opacity: 0.6;
-}
-.completed {
-  box-shadow: 0 0 7px 1px #20d420;
-}
-
+/* === Clear Completed Tasks === */
 .clear-completed-tasks-container {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 0.4rem;
+  align-self: flex-end;
+}
+
+.clear-btn {
+  color: #c3caee;
+  background: none;
+  border: none;
+  border-radius: 1rem;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.clear-btn:hover {
+  color: #ebedf9;
 }
 
 .trash-icon {
@@ -197,29 +217,11 @@ h2 {
   color: inherit;
 }
 
-.clear-btn {
-  color: #c3caee;
-  cursor: pointer;
-  border: none;
-  background: none;
-  border-radius: 1rem;
-  transition: all 0.2s;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.2rem;
-}
-
-.clear-btn:hover,
 .trash-icon:hover {
   color: #ebedf9;
 }
 
-.clear-completed-tasks-container {
-  align-self: flex-end;
-}
-
+/* === Overlay & Edit Modal === */
 .overlay {
   position: fixed;
   top: 0;
@@ -231,37 +233,44 @@ h2 {
   z-index: 10;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.2s;
+  transition: all 0.3s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .edit-container {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  padding: 2rem;
-  display: grid;
-  grid-template-columns: 1fr auto;
+  width: 42rem;
+  height: 12rem;
+  padding: 3rem 2rem 2rem 2rem;
+  display: flex;
   gap: 1rem;
   justify-content: center;
   align-items: center;
-  z-index: 20;
-  opacity: 1;
-  visibility: hidden;
-  transition: all 0.3s;
   background-color: #050814;
   box-shadow: 0 0 40px 1px #7284d8;
   border-radius: 20px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s;
+  position: relative;
+  z-index: 20;
 }
 
+/* Active States */
 .overlay.active,
-.edit-container.active {
+.edit-container.active,
+.close-icon.active {
   opacity: 1;
   visibility: visible;
 }
 
+/* Close Button */
 .close-icon {
-  grid-column: 2/-1;
+  position: absolute;
+  top: 0.4rem;
+  right: 1rem;
+  width: 3.2rem;
   stroke: #364fc7;
   cursor: pointer;
   transition: all 0.3s;
@@ -270,4 +279,3 @@ h2 {
 .close-icon:hover {
   stroke: #4a61cd;
 }
-
