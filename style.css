@@ -80,12 +80,17 @@ h2 {
   font-size: 2rem;
 }
 
+.log-in-form__password-input {
+  min-width: 34rem;
+}
+
 .task-input:focus,
 .edit-task-input:focus,
 .log-in-form__username-input:focus,
 .log-in-form__password-input:focus,
 .sign-up-form__username-input:focus,
-.sign-up-form__password-input:focus {
+.sign-up-form__password-input:focus,
+.sign-up-form__confirm-password-input:focus {
   outline: none;
 }
 
@@ -302,7 +307,7 @@ h2 {
 
 .log-in-form,
 .sign-up-form {
-  /*width: 40rem;*/
+  width: 46rem;
   /*height: 100%;*/
   background-color: #050814;
   box-shadow: 0 0 40px 1px #7284d8;
@@ -403,7 +408,7 @@ label {
   justify-content: center;
   gap: 1rem;
   align-items: center;
-  z-index: 9999;
+  z-index: 100;
   color: #ebedf9;
   position: absolute;
   top: 8rem;
@@ -418,6 +423,7 @@ label {
 
 .success-container {
   box-shadow: 0 0 10px 1px #20d420;
+  z-index: 1000;
 }
 
 .error-container.show,
@@ -439,4 +445,21 @@ label {
   word-wrap: break-word;
   white-space: normal;
   max-width: 34rem;
+}
+
+.password-input-container {
+  position: relative;
+}
+
+.eye-btn {
+  position: absolute;
+  width: 4rem;
+  right: -4.6rem;
+  stroke: #364fc7;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.eye-btn:hover {
+  stroke: #4a61cd;
 }

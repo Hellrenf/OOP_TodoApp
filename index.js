@@ -1,5 +1,4 @@
 class Task {
-  status;
   constructor(task) {
     this.id = Date.now();
     this.task = task;
@@ -31,6 +30,7 @@ class TaskList {
 }
 
 class UserAccount {
+  taskList;
   constructor(username, password) {
     this.username = username;
     this.password = password;
@@ -148,6 +148,7 @@ class Inputs {
 }
 
 class App {
+  currentAccount;
   constructor() {
     this.taskList = new TaskList();
     this.inputs = new Inputs();
@@ -155,6 +156,7 @@ class App {
     this.accManager = new AccountManager();
 
     this.taskListContainer = document.querySelector(".task-list-container");
+    this.todoListContainer = document.querySelector(".todo-list-container");
     this.overlay = document.querySelector(".overlay");
     this.editTaskContainer = document.querySelector(".edit-container");
 
@@ -167,28 +169,108 @@ class App {
 
     this.messageIsVisible = false;
 
+    this.buttons.loginFormLoginBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      const username = this.inputs.loginFormUsernameInput.value;
+      const password = this.inputs.loginFormPasswordInput.value;
+
+      if (!username.trim()) {
+        if (!this.messageIsVisible) {
+          this.accManager.message = "Username cannot be empty";
+          this.showMessage();
+        }
+        return;
+      }
+
+      if (!password.trim()) {
+        if (!this.messageIsVisible) {
+          this.accManager.message = "Password cannot be empty";
+          this.showMessage();
+        }
+        return;
+      }
+
+      const acc = this.accManager.accounts.find(
+        (acc) => acc.username === username,
+      );
+
+      if (!acc) {
+        if (!this.messageIsVisible) {
+          this.accManager.message = "Wrong login or password";
+          this.showMessage();
+        }
+        return;
+      }
+
+      if (password !== acc.password) {
+        if (!this.messageIsVisible) {
+          this.accManager.message = "Wrong login or password";
+          this.showMessage();
+        }
+        return;
+      }
+
+      this.overlay.classList.remove("active");
+      this.todoListContainer.style.display = "flex";
+
+      this.loginFormContainer.style.display = "none";
+
+      this.currentAccount = acc;
+    });
+
+    // this.loginFormContainer.addEventListener("click", (e) => {
+    //   const target = e.target;
+    //   if (!target.classList.contains("eye-btn")) return;
+    //
+    //   const eyeBtn = target.closest(".eye-btn");
+    //   const passwordInput = target
+    //     .closest(".password-input-container")
+    //     .querySelector(".password-input");
+    //
+    //   if (eyeBtn.classList.contains("closed")) {
+    //     passwordInput.type = "password";
+    //     this.toggleEyeBtn(eyeBtn);
+    //   } else if (!eyeBtn.classList.contains("closed")) {
+    //     passwordInput.type = "text";
+    //     this.toggleEyeBtn(eyeBtn);
+    //   }
+    // });
+
     this.buttons.signupFormSignupBtn.addEventListener("click", (e) => {
       e.preventDefault();
+
       const username = this.inputs.signupFormUsernameInput.value;
       const password = this.inputs.signupFormPasswordInput.value;
       const confirmationPassword =
         this.inputs.signupFormConfirmPasswordInput.value;
 
-      if (!this.accManager.isUsernameValid(username) && !this.messageIsVisible)
-        this.showMessage();
-      else if (
-        !this.accManager.isPasswordValid(password) &&
-        !this.messageIsVisible
-      )
-        this.showMessage();
-      else if (confirmationPassword !== password) {
+      if (!this.accManager.isUsernameValid(username)) {
+        if (!this.messageIsVisible) {
+          this.showMessage();
+        }
+        return;
+      }
+
+      if (!this.accManager.isPasswordValid(password)) {
+        if (!this.messageIsVisible) {
+          this.showMessage();
+        }
+        return;
+      }
+
+      if (confirmationPassword !== password) {
         this.accManager.message = "Passwords do not match";
         this.showMessage();
-      } else {
-        this.accManager.addAccount(new UserAccount(username, password));
-        this.showMessage(true);
-        this.switchForm();
+        return;
       }
+
+      this.accManager.addAccount(new UserAccount(username, password));
+      this.showMessage(true);
+      this.switchForm();
+      this.inputs.signupFormUsernameInput.value = "";
+      this.inputs.signupFormPasswordInput.value = "";
+      this.inputs.signupFormConfirmPasswordInput.value = "";
     });
 
     this.buttons.loginFormSignupBtn.addEventListener("click", () => {
@@ -224,7 +306,8 @@ class App {
 
     this.overlay.addEventListener("click", (e) => {
       if (e.target === this.overlay) {
-        this.closeEditModal();
+        if (this.editTaskContainer.classList.contains("active"))
+          this.closeEditModal();
       }
     });
 
@@ -285,6 +368,7 @@ class App {
 
     this.taskList.addTask(new Task(text));
     this.inputs.taskInput.value = "";
+    this.syncTaskList(this.currentAccount);
     this.render();
   }
 
@@ -294,13 +378,13 @@ class App {
     } else {
       task.markAsPending();
     }
-
+    this.syncTaskList(this.currentAccount);
     this.render();
   }
 
   handleDeleteTask(taskId) {
     this.taskList.deleteTask(taskId);
-
+    this.syncTaskList(this.currentAccount);
     this.render();
   }
 
@@ -314,6 +398,7 @@ class App {
     const task = this.taskList.tasks.find((t) => t.id === Number(taskId));
 
     task.task = editedText;
+    this.syncTaskList(this.currentAccount);
   }
 
   closeEditModal() {
@@ -380,6 +465,24 @@ class App {
         this.messageIsVisible = false;
       }, 500);
     }
+  }
+
+  //   toggleEyeBtn(eyeBtn) {
+  //     if (!eyeBtn.classList.contains("closed")) {
+  //       eyeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="eye-btn closed">
+  //   <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+  // </svg>
+  // `;
+  //     } else {
+  //       eyeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="eye-btn">
+  //               <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+  //               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+  //             </svg>`;
+  //     }
+  //   }
+
+  syncTaskList(acc) {
+    acc.taskList = this.taskList;
   }
 
   render() {
