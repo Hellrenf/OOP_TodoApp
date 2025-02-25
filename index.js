@@ -1,8 +1,8 @@
 class Task {
-  constructor(task) {
-    this.id = Date.now();
+  constructor(task, id = Date.now(), status = "pending") {
+    this.id = id;
     this.task = task;
-    this.status = "pending";
+    this.status = status;
   }
 
   markAsDone() {
@@ -42,7 +42,7 @@ class AccountManager {
   #validUsernameChars;
   #validPasswordChars;
   constructor() {
-    this.accounts = [];
+    this.accounts = this.loadAccounts();
     this.#validUsernameChars = [
       ..."abcdefghijklmnopqrstuvwxyz",
       ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
@@ -58,6 +58,26 @@ class AccountManager {
 
   addAccount(account) {
     this.accounts.push(account);
+    this.saveAccounts();
+  }
+
+  saveAccounts() {
+    localStorage.setItem("accounts", JSON.stringify(this.accounts));
+  }
+
+  loadAccounts() {
+    const storedAccounts = JSON.parse(localStorage.getItem("accounts")) || [];
+    return storedAccounts.map((acc) => {
+      const user = new UserAccount(acc.username, acc.password);
+      user.taskList.tasks = acc.taskList.tasks.map(
+        (task) => new Task(task.task, task.id, task.status),
+      );
+      return user;
+    });
+  }
+
+  getAccount(username) {
+    return this.accounts.find((account) => account.username === username);
   }
 
   isUsernameValid(username) {
@@ -150,7 +170,6 @@ class Inputs {
 class App {
   currentAccount;
   constructor() {
-    this.taskList = new TaskList();
     this.inputs = new Inputs();
     this.buttons = new Buttons();
     this.accManager = new AccountManager();
@@ -191,9 +210,7 @@ class App {
         return;
       }
 
-      const acc = this.accManager.accounts.find(
-        (acc) => acc.username === username,
-      );
+      const acc = this.accManager.getAccount(username);
 
       if (!acc) {
         if (!this.messageIsVisible) {
@@ -217,6 +234,7 @@ class App {
       this.loginFormContainer.style.display = "none";
 
       this.currentAccount = acc;
+      this.render();
     });
 
     // this.loginFormContainer.addEventListener("click", (e) => {
@@ -298,9 +316,10 @@ class App {
     });
 
     this.buttons.clearBtn.addEventListener("click", () => {
-      this.taskList.tasks = this.taskList.tasks.filter(
-        (task) => task.status === "pending",
-      );
+      this.currentAccount.taskList.tasks =
+        this.currentAccount.taskList.tasks.filter(
+          (task) => task.status === "pending",
+        );
       this.render();
     });
 
@@ -343,7 +362,9 @@ class App {
 
       const taskContainer = target.closest(".task-container");
       const taskId = taskContainer.dataset.taskId;
-      const task = this.taskList.tasks.find((t) => t.id === Number(taskId));
+      const task = this.currentAccount.taskList.tasks.find(
+        (t) => t.id === Number(taskId),
+      );
 
       if (target.classList.contains("toggle-btn")) {
         this.toggleTask(task);
@@ -366,9 +387,9 @@ class App {
     const text =
       taskInputValue.trim()[0].toUpperCase() + taskInputValue.slice(1);
 
-    this.taskList.addTask(new Task(text));
+    this.currentAccount.taskList.addTask(new Task(text));
     this.inputs.taskInput.value = "";
-    this.syncTaskList(this.currentAccount);
+    this.accManager.saveAccounts();
     this.render();
   }
 
@@ -378,13 +399,13 @@ class App {
     } else {
       task.markAsPending();
     }
-    this.syncTaskList(this.currentAccount);
+    this.accManager.saveAccounts();
     this.render();
   }
 
   handleDeleteTask(taskId) {
-    this.taskList.deleteTask(taskId);
-    this.syncTaskList(this.currentAccount);
+    this.currentAccount.taskList.deleteTask(taskId);
+    this.accManager.saveAccounts();
     this.render();
   }
 
@@ -395,10 +416,12 @@ class App {
     const editedText =
       editTaskInputValue.trim()[0].toUpperCase() + editTaskInputValue.slice(1);
 
-    const task = this.taskList.tasks.find((t) => t.id === Number(taskId));
+    const task = this.currentAccount.taskList.tasks.find(
+      (t) => t.id === Number(taskId),
+    );
 
     task.task = editedText;
-    this.syncTaskList(this.currentAccount);
+    this.accManager.saveAccounts();
   }
 
   closeEditModal() {
@@ -481,16 +504,12 @@ class App {
   //     }
   //   }
 
-  syncTaskList(acc) {
-    acc.taskList = this.taskList;
-  }
-
   render() {
     this.taskListContainer.innerHTML = "";
 
-    if (this.taskList.tasks.length === 0) return;
+    if (!this.currentAccount?.taskList?.tasks?.length) return;
 
-    this.taskList.tasks.forEach((task) => {
+    this.currentAccount.taskList.tasks.forEach((task) => {
       // const HTML = `
       //             <div class="task-container ${task.status === "done" ? "completed" : ""}" data-task-id="${i}">
       //               <p class="task-paragraph">${task.task}</p>
