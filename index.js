@@ -124,7 +124,7 @@ class AccountManager {
   }
 }
 
-class Buttons {
+class Button {
   constructor() {
     this.addBtn = document.querySelector(".add-btn");
     this.okBtn = document.querySelector(".ok-btn");
@@ -143,7 +143,7 @@ class Buttons {
   }
 }
 
-class Inputs {
+class Input {
   constructor() {
     this.taskInput = document.querySelector(".task-input");
     this.editTaskInput = document.querySelector(".edit-task-input");
@@ -170,8 +170,8 @@ class Inputs {
 class App {
   currentAccount;
   constructor() {
-    this.inputs = new Inputs();
-    this.buttons = new Buttons();
+    this.input = new Input();
+    this.button = new Button();
     this.accManager = new AccountManager();
 
     this.taskListContainer = document.querySelector(".task-list-container");
@@ -188,11 +188,11 @@ class App {
 
     this.messageIsVisible = false;
 
-    this.buttons.loginFormLoginBtn.addEventListener("click", (e) => {
+    this.button.loginFormLoginBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
-      const username = this.inputs.loginFormUsernameInput.value;
-      const password = this.inputs.loginFormPasswordInput.value;
+      const username = this.input.loginFormUsernameInput.value;
+      const password = this.input.loginFormPasswordInput.value;
 
       if (!username.trim()) {
         if (!this.messageIsVisible) {
@@ -237,31 +237,53 @@ class App {
       this.render();
     });
 
-    // this.loginFormContainer.addEventListener("click", (e) => {
-    //   const target = e.target;
-    //   if (!target.classList.contains("eye-btn")) return;
-    //
-    //   const eyeBtn = target.closest(".eye-btn");
-    //   const passwordInput = target
-    //     .closest(".password-input-container")
-    //     .querySelector(".password-input");
-    //
-    //   if (eyeBtn.classList.contains("closed")) {
-    //     passwordInput.type = "password";
-    //     this.toggleEyeBtn(eyeBtn);
-    //   } else if (!eyeBtn.classList.contains("closed")) {
-    //     passwordInput.type = "text";
-    //     this.toggleEyeBtn(eyeBtn);
-    //   }
-    // });
+    this.loginFormContainer.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!target.classList.contains("eye-btn")) return;
 
-    this.buttons.signupFormSignupBtn.addEventListener("click", (e) => {
+      const eyeBtn = target.closest(".eye-btn");
+      const passwordInputContainer = target.closest(
+        ".password-input-container",
+      );
+      const passwordInput =
+        passwordInputContainer.querySelector(".password-input");
+
+      if (eyeBtn.classList.contains("closed")) {
+        passwordInput.type = "password";
+      } else if (!eyeBtn.classList.contains("closed")) {
+        passwordInput.type = "text";
+      }
+
+      this.toggleEyeBtn(passwordInputContainer);
+    });
+
+    this.signupFormContainer.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!target.classList.contains("sign-up-form__eye-btn")) return;
+
+      const eyeBtn = target.closest(".sign-up-form__eye-btn");
+      const passwordInputContainer = target.closest(
+        ".password-input-container",
+      );
+      const passwordInput =
+        passwordInputContainer.querySelector(".password-input");
+
+      if (eyeBtn.classList.contains("closed")) {
+        passwordInput.type = "password";
+      } else if (!eyeBtn.classList.contains("closed")) {
+        passwordInput.type = "text";
+      }
+
+      this.toggleEyeBtn(passwordInputContainer, false);
+    });
+
+    this.button.signupFormSignupBtn.addEventListener("click", (e) => {
       e.preventDefault();
 
-      const username = this.inputs.signupFormUsernameInput.value;
-      const password = this.inputs.signupFormPasswordInput.value;
+      const username = this.input.signupFormUsernameInput.value;
+      const password = this.input.signupFormPasswordInput.value;
       const confirmationPassword =
-        this.inputs.signupFormConfirmPasswordInput.value;
+        this.input.signupFormConfirmPasswordInput.value;
 
       if (!this.accManager.isUsernameValid(username)) {
         if (!this.messageIsVisible) {
@@ -285,18 +307,18 @@ class App {
 
       this.accManager.addAccount(new UserAccount(username, password));
       this.showMessage(true);
-      this.switchForm();
-      this.inputs.signupFormUsernameInput.value = "";
-      this.inputs.signupFormPasswordInput.value = "";
-      this.inputs.signupFormConfirmPasswordInput.value = "";
+      this.toggleForm();
+      this.input.signupFormUsernameInput.value = "";
+      this.input.signupFormPasswordInput.value = "";
+      this.input.signupFormConfirmPasswordInput.value = "";
     });
 
-    this.buttons.loginFormSignupBtn.addEventListener("click", () => {
-      this.switchForm();
+    this.button.loginFormSignupBtn.addEventListener("click", () => {
+      this.toggleForm();
     });
 
-    this.buttons.returnBtn.addEventListener("click", () => {
-      this.switchForm();
+    this.button.returnBtn.addEventListener("click", () => {
+      this.toggleForm();
     });
 
     window.addEventListener("keydown", (e) => {
@@ -305,17 +327,17 @@ class App {
         this.editTaskContainer.classList.contains("active")
       ) {
         if (e.key === "Escape") {
-          this.closeEditModal();
+          this.toggleEditModal();
           document.activeElement.blur();
         }
       }
     });
 
-    this.buttons.addBtn.addEventListener("click", () => {
+    this.button.addBtn.addEventListener("click", () => {
       this.handleAddTask();
     });
 
-    this.buttons.clearBtn.addEventListener("click", () => {
+    this.button.clearBtn.addEventListener("click", () => {
       this.currentAccount.taskList.tasks =
         this.currentAccount.taskList.tasks.filter(
           (task) => task.status === "pending",
@@ -326,32 +348,32 @@ class App {
     this.overlay.addEventListener("click", (e) => {
       if (e.target === this.overlay) {
         if (this.editTaskContainer.classList.contains("active"))
-          this.closeEditModal();
+          this.toggleEditModal();
       }
     });
 
-    this.buttons.closeBtn.addEventListener("click", () => {
-      this.closeEditModal();
+    this.button.closeBtn.addEventListener("click", () => {
+      this.toggleEditModal();
     });
 
-    this.buttons.okBtn.addEventListener("click", () => {
+    this.button.okBtn.addEventListener("click", () => {
       const taskId = this.editTaskContainer.dataset.editId;
       this.handleEditTask(taskId);
-      this.closeEditModal();
+      this.toggleEditModal();
       this.render();
     });
 
-    this.inputs.taskInput.addEventListener("keydown", (e) => {
+    this.input.taskInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         this.handleAddTask();
       }
     });
 
-    this.inputs.editTaskInput.addEventListener("keydown", (e) => {
+    this.input.editTaskInput.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
         const taskId = this.editTaskContainer.dataset.editId;
         this.handleEditTask(taskId);
-        this.closeEditModal();
+        this.toggleEditModal();
         this.render();
       }
     });
@@ -367,12 +389,12 @@ class App {
       );
 
       if (target.classList.contains("toggle-btn")) {
-        this.toggleTask(task);
+        this.toggleTaskStatus(task);
       } else if (target.classList.contains("delete-btn")) {
         this.handleDeleteTask(taskId);
       } else if (target.classList.contains("edit-btn")) {
-        this.openEditModal();
-        this.inputs.editTaskInput.value = task.task;
+        this.toggleEditModal();
+        this.input.editTaskInput.value = task.task;
         this.editTaskContainer.dataset.editId = taskId;
       }
     });
@@ -381,19 +403,19 @@ class App {
   }
 
   handleAddTask() {
-    const taskInputValue = this.inputs.taskInput.value;
+    const taskInputValue = this.input.taskInput.value;
     if (!taskInputValue.trim()) return;
 
     const text =
       taskInputValue.trim()[0].toUpperCase() + taskInputValue.slice(1);
 
     this.currentAccount.taskList.addTask(new Task(text));
-    this.inputs.taskInput.value = "";
+    this.input.taskInput.value = "";
     this.accManager.saveAccounts();
     this.render();
   }
 
-  toggleTask(task) {
+  toggleTaskStatus(task) {
     if (task.status === "pending") {
       task.markAsDone();
     } else {
@@ -410,7 +432,7 @@ class App {
   }
 
   handleEditTask(taskId) {
-    const editTaskInputValue = this.inputs.editTaskInput.value;
+    const editTaskInputValue = this.input.editTaskInput.value;
     if (!editTaskInputValue.trim()) return;
 
     const editedText =
@@ -424,19 +446,19 @@ class App {
     this.accManager.saveAccounts();
   }
 
-  closeEditModal() {
-    this.overlay.classList.remove("active");
-    this.editTaskContainer.classList.remove("active");
-    this.buttons.closeBtn.classList.remove("active");
+  toggleEditModal() {
+    if (this.overlay.classList.contains("active")) {
+      this.overlay.classList.remove("active");
+      this.editTaskContainer.classList.remove("active");
+      this.button.closeBtn.classList.remove("active");
+    } else {
+      this.overlay.classList.add("active");
+      this.editTaskContainer.classList.add("active");
+      this.button.closeBtn.classList.add("active");
+    }
   }
 
-  openEditModal() {
-    this.overlay.classList.add("active");
-    this.editTaskContainer.classList.add("active");
-    this.buttons.closeBtn.classList.add("active");
-  }
-
-  switchForm() {
+  toggleForm() {
     const loginDisplay = getComputedStyle(this.loginFormContainer).display;
 
     if (loginDisplay === "none") {
@@ -449,60 +471,41 @@ class App {
   }
 
   showMessage(isSuccess = false) {
-    if (!isSuccess) {
-      this.messageIsVisible = true;
+    this.messageIsVisible = true;
 
-      this.errorMsgText.textContent = this.accManager.message;
-      this.errorContainer.style.display = "flex";
+    const container = isSuccess ? this.successContainer : this.errorContainer;
+    if (!isSuccess) this.errorMsgText.textContent = this.accManager.message;
 
-      setTimeout(() => {
-        this.errorContainer.style.transform = "translateY(-50%)";
-      }, 10);
+    container.style.display = "flex";
 
-      setTimeout(() => this.hideMessage(), 3000);
-    } else {
-      this.messageIsVisible = true;
-      this.successContainer.style.display = "flex";
+    setTimeout(() => {
+      container.style.transform = "translateY(-50%)";
+    }, 10);
 
-      setTimeout(() => {
-        this.successContainer.style.transform = "translateY(-50%)";
-      }, 10);
-
-      setTimeout(() => this.hideMessage(true), 3000);
-    }
+    setTimeout(() => this.hideMessage(isSuccess), 3000);
   }
 
   hideMessage(isSuccess = false) {
-    if (!isSuccess) {
-      this.errorContainer.style.transform = "translateY(-200%)";
+    const container = isSuccess ? this.successContainer : this.errorContainer;
+    container.style.transform = "translateY(-200%)";
 
-      setTimeout(() => {
-        this.errorContainer.style.display = "none";
-        this.messageIsVisible = false;
-      }, 500);
-    } else {
-      this.successContainer.style.transform = "translateY(-200%)";
-
-      setTimeout(() => {
-        this.successContainer.style.display = "none";
-        this.messageIsVisible = false;
-      }, 500);
-    }
+    setTimeout(() => {
+      container.style.display = "none";
+      this.messageIsVisible = false;
+    }, 500);
   }
 
-  //   toggleEyeBtn(eyeBtn) {
-  //     if (!eyeBtn.classList.contains("closed")) {
-  //       eyeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="eye-btn closed">
-  //   <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
-  // </svg>
-  // `;
-  //     } else {
-  //       eyeBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="eye-btn">
-  //               <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
-  //               <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-  //             </svg>`;
-  //     }
-  //   }
+  toggleEyeBtn(inputContainer, loginForm = true) {
+    if (!loginForm) {
+      inputContainer
+        .querySelector(".sign-up-form__eye-btn")
+        .classList.toggle("active");
+      inputContainer.querySelector(".closed").classList.toggle("active");
+    } else {
+      inputContainer.querySelector(".eye-btn").classList.toggle("active");
+      inputContainer.querySelector(".closed").classList.toggle("active");
+    }
+  }
 
   render() {
     this.taskListContainer.innerHTML = "";
@@ -510,18 +513,6 @@ class App {
     if (!this.currentAccount?.taskList?.tasks?.length) return;
 
     this.currentAccount.taskList.tasks.forEach((task) => {
-      // const HTML = `
-      //             <div class="task-container ${task.status === "done" ? "completed" : ""}" data-task-id="${i}">
-      //               <p class="task-paragraph">${task.task}</p>
-      //               <div class="buttons-container">
-      //                 <button class="buttons-container-btn toggle-btn">Toggle</button>
-      //                 <button class="buttons-container-btn edit-btn">Edit</button>
-      //                 <button class="buttons-container-btn delete-btn">Delete</button>
-      //               </div>
-      //             </div>`;
-      //
-      // this.taskListContainer.insertAdjacentHTML("afterbegin", HTML);
-
       const taskDiv = document.createElement("div");
       taskDiv.classList.add("task-container");
       if (task.status === "done") taskDiv.classList.add("completed");

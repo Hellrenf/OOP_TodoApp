@@ -1,4 +1,3 @@
-/* === Global Styles === */
 * {
   padding: 0;
   margin: 0;
@@ -23,7 +22,6 @@ body {
   overflow-y: hidden;
 }
 
-/* === Containers === */
 .todo-list-container {
   margin: 0 auto;
   width: 60rem;
@@ -37,8 +35,6 @@ body {
   align-items: center;
   gap: 2rem;
 }
-
-/* === Typography === */
 
 h1 {
   text-align: center;
@@ -57,7 +53,6 @@ h2 {
   margin-top: 1.2rem;
 }
 
-/* === Input & Buttons === */
 .input-container {
   display: flex;
   align-items: center;
@@ -132,7 +127,6 @@ h2 {
   scrollbar-gutter: stable;
 }
 
-/* Scrollbar */
 .task-list-container::-webkit-scrollbar {
   width: 10px;
 }
@@ -147,7 +141,6 @@ h2 {
   border-radius: 10px;
 }
 
-/* === Task Items === */
 .task-container {
   display: flex;
   align-items: center;
@@ -170,7 +163,6 @@ h2 {
   padding-bottom: 0.2rem;
 }
 
-/* Completed Task */
 .completed .task-paragraph {
   text-decoration: line-through;
   opacity: 0.6;
@@ -180,7 +172,6 @@ h2 {
   box-shadow: 0 0 7px 1px #20d420;
 }
 
-/* === Buttons Container === */
 .buttons-container {
   display: flex;
   gap: 1rem;
@@ -205,7 +196,6 @@ h2 {
   background-color: #10183c;
 }
 
-/* === Clear Completed Tasks === */
 .clear-completed-tasks-container {
   display: flex;
   align-items: center;
@@ -243,7 +233,6 @@ h2 {
   color: #ebedf9;
 }
 
-/* === Overlay & Edit Modal & Forms === */
 .overlay {
   position: fixed;
   top: 0;
@@ -278,10 +267,11 @@ h2 {
   z-index: 20;
 }
 
-/* Active States */
 .overlay.active,
 .edit-container.active,
-.close-icon.active {
+.close-icon.active,
+.eye-btn.active,
+.sign-up-form__eye-btn.active {
   opacity: 1;
   visibility: visible;
 }
@@ -290,7 +280,6 @@ h2 {
   display: flex;
 }
 
-/* Close Button */
 .close-icon {
   position: absolute;
   top: 0.4rem;
@@ -400,8 +389,6 @@ label {
   background-color: #4a61cd;
 }
 
-/* Error container */
-
 .error-container,
 .success-container {
   display: none;
@@ -451,15 +438,25 @@ label {
   position: relative;
 }
 
-.eye-btn {
+.eye-btn path,
+.sign-up-form__eye-btn path {
+  pointer-events: none;
+}
+
+.eye-btn,
+.sign-up-form__eye-btn {
   position: absolute;
   width: 4rem;
   right: -4.6rem;
   stroke: #364fc7;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: hover 0.2s;
+  visibility: hidden;
+  opacity: 0;
+  z-index: 100;
 }
 
-.eye-btn:hover {
+.eye-btn:hover,
+.sign-up-form__eye-btn:hover {
   stroke: #4a61cd;
 }
