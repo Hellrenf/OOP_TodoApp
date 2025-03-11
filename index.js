@@ -39,20 +39,12 @@ class UserAccount {
 }
 
 class AccountManager {
-  #validUsernameChars;
-  #validPasswordChars;
+  #regexUsername;
+  #regexPassword;
   constructor() {
     this.accounts = this.loadAccounts();
-    this.#validUsernameChars = [
-      ..."abcdefghijklmnopqrstuvwxyz",
-      ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-      ..."0123456789",
-      "_",
-    ];
-    this.#validPasswordChars = [
-      ..."abcdefghijklmnopqrstuvwxyz",
-      ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-    ];
+    this.#regexUsername = /^(?![0-9_])[a-zA-Z0-9_]{3,20}$/;
+    this.#regexPassword = /^[A-Za-z0-9@$!%*?&]{8,20}$/g;
     this.message = "";
   }
 
@@ -81,46 +73,29 @@ class AccountManager {
   }
 
   isUsernameValid(username) {
-    const accAlreadyInUse = this.accounts.find(
-      (account) => account.username === username,
-    );
-
     if (!username.trim()) {
-      this.message = "Username cannot be empty";
+      this.message = "Username cannot be empty.";
       return false;
-    } else if (!isNaN(username[0])) {
-      this.message = "Username cannot start with a number";
-      return false;
-    } else if (username[0] === "_") {
-      this.message = "Username cannot start with '_'";
-      return false;
-    } else if (
-      ![...username].every((char) => this.#validUsernameChars.includes(char))
-    ) {
-      this.message =
-        "Only Latin letters, digits, and the underscore '_' are allowed.";
-      return false;
-    } else if (accAlreadyInUse) {
-      this.message = "Username is already in use";
-      return false;
-    } else {
-      return true;
     }
+    if (!this.#regexUsername.test(username)) {
+      this.message =
+        "Username must be 3-20 characters long, start with a letter, and contain only Latin letters, digits, and '_'.";
+      return false;
+    }
+    return true;
   }
 
   isPasswordValid(password) {
-    if (password.length < 8) {
-      this.message = "Password must be at least 8 characters long";
+    if (!password.trim()) {
+      this.message = "Password cannot be empty.";
       return false;
-    } else if (password.length > 20) {
-      this.message = "Password must be less than 20 characters long";
-      return false;
-    } else if (!password.trim()) {
-      this.message = "Password cannot be empty";
-      return false;
-    } else {
-      return true;
     }
+    if (!this.#regexPassword.test(password)) {
+      this.message =
+        "Password must be 8-20 characters long and contain only allowed characters.";
+      return false;
+    }
+    return true;
   }
 }
 
@@ -196,7 +171,7 @@ class App {
 
       if (!username.trim()) {
         if (!this.messageIsVisible) {
-          this.accManager.message = "Username cannot be empty";
+          this.accManager.message = "Username cannot be empty.";
           this.showMessage();
         }
         return;
@@ -204,7 +179,7 @@ class App {
 
       if (!password.trim()) {
         if (!this.messageIsVisible) {
-          this.accManager.message = "Password cannot be empty";
+          this.accManager.message = "Password cannot be empty.";
           this.showMessage();
         }
         return;
@@ -212,17 +187,9 @@ class App {
 
       const acc = this.accManager.getAccount(username);
 
-      if (!acc) {
+      if (!acc || password !== acc.password) {
         if (!this.messageIsVisible) {
-          this.accManager.message = "Wrong login or password";
-          this.showMessage();
-        }
-        return;
-      }
-
-      if (password !== acc.password) {
-        if (!this.messageIsVisible) {
-          this.accManager.message = "Wrong login or password";
+          this.accManager.message = "Wrong login or password.";
           this.showMessage();
         }
         return;
@@ -238,43 +205,11 @@ class App {
     });
 
     this.loginFormContainer.addEventListener("click", (e) => {
-      const target = e.target;
-      if (!target.classList.contains("eye-btn")) return;
-
-      const eyeBtn = target.closest(".eye-btn");
-      const passwordInputContainer = target.closest(
-        ".password-input-container",
-      );
-      const passwordInput =
-        passwordInputContainer.querySelector(".password-input");
-
-      if (eyeBtn.classList.contains("closed")) {
-        passwordInput.type = "password";
-      } else if (!eyeBtn.classList.contains("closed")) {
-        passwordInput.type = "text";
-      }
-
-      this.toggleEyeBtn(passwordInputContainer);
+      this.togglePasswordVisibility(e);
     });
 
     this.signupFormContainer.addEventListener("click", (e) => {
-      const target = e.target;
-      if (!target.classList.contains("sign-up-form__eye-btn")) return;
-
-      const eyeBtn = target.closest(".sign-up-form__eye-btn");
-      const passwordInputContainer = target.closest(
-        ".password-input-container",
-      );
-      const passwordInput =
-        passwordInputContainer.querySelector(".password-input");
-
-      if (eyeBtn.classList.contains("closed")) {
-        passwordInput.type = "password";
-      } else if (!eyeBtn.classList.contains("closed")) {
-        passwordInput.type = "text";
-      }
-
-      this.toggleEyeBtn(passwordInputContainer, false);
+      this.togglePasswordVisibility(e, false);
     });
 
     this.button.signupFormSignupBtn.addEventListener("click", (e) => {
@@ -482,7 +417,7 @@ class App {
       container.style.transform = "translateY(-50%)";
     }, 10);
 
-    setTimeout(() => this.hideMessage(isSuccess), 3000);
+    setTimeout(() => this.hideMessage(isSuccess), 5000);
   }
 
   hideMessage(isSuccess = false) {
@@ -505,6 +440,29 @@ class App {
       inputContainer.querySelector(".eye-btn").classList.toggle("active");
       inputContainer.querySelector(".closed").classList.toggle("active");
     }
+  }
+
+  togglePasswordVisibility(e, loginForm = true) {
+    const target = e.target;
+    if (
+      !target.classList.contains(
+        loginForm ? "eye-btn" : "sign-up-form__eye-btn",
+      )
+    )
+      return;
+
+    const eyeBtn = target.closest(
+      loginForm ? ".eye-btn" : ".sign-up-form__eye-btn",
+    );
+    const passwordInputContainer = target.closest(".password-input-container");
+    const passwordInput =
+      passwordInputContainer.querySelector(".password-input");
+
+    passwordInput.type = eyeBtn.classList.contains("closed")
+      ? "password"
+      : "text";
+
+    this.toggleEyeBtn(passwordInputContainer, loginForm);
   }
 
   render() {
