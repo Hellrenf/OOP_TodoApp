@@ -73,6 +73,11 @@ class AccountManager {
   }
 
   isUsernameValid(username) {
+    const accAlreadyInUse = this.getAccount(username);
+    if (accAlreadyInUse) {
+      this.message = "Username is already in use.";
+      return false;
+    }
     if (!username.trim()) {
       this.message = "Username cannot be empty.";
       return false;
@@ -82,6 +87,7 @@ class AccountManager {
         "Username must be 3-20 characters long, start with a letter, and contain only Latin letters, digits, and '_'.";
       return false;
     }
+
     return true;
   }
 
