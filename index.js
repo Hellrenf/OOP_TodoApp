@@ -4,37 +4,128 @@ class Task {
     this.task = task;
     this.status = status;
   }
+}
 
-  markAsDone() {
-    this.status = "done";
+class TaskReducer {
+  reduce(state, action) {
+    switch (action.type) {
+      case "ADD_TASK":
+        return {
+          ...state,
+          tasks: [...state.tasks, action.payload],
+        };
+      case "DELETE_TASK":
+        return {
+          ...state,
+          tasks: state.tasks.filter(
+            (task) => task.id !== Number(action.payload),
+          ),
+        };
+      case "TOGGLE_TASK_STATUS":
+        return {
+          ...state,
+          tasks: state.tasks.map((task) =>
+            task.id === Number(action.payload)
+              ? task.status === "pending"
+                ? { ...task, status: "done" }
+                : { ...task, status: "pending" }
+              : task,
+          ),
+        };
+      case "EDIT_TASK":
+        return {
+          ...state,
+          tasks: state.tasks.map((task) =>
+            task.id === Number(action.payload.id)
+              ? { ...task, task: action.payload.text }
+              : task,
+          ),
+        };
+      case "CLEAR_COMPLETED":
+        return {
+          ...state,
+          tasks: state.tasks.filter((task) => task.status === "pending"),
+        };
+      default:
+        return state;
+    }
+  }
+}
+
+class Store {
+  state;
+  reducer;
+  subscribers;
+
+  constructor(initialState, reducer) {
+    this.state = initialState;
+    this.reducer = reducer;
+    this.subscribers = [];
   }
 
-  markAsPending() {
-    this.status = "pending";
+  getState() {
+    return this.state;
+  }
+
+  dispatch(action) {
+    this.state = this.reducer.reduce(this.state, action);
+    this.notifySubscribers();
+  }
+
+  subscribe(subscriber) {
+    this.subscribers.push(subscriber);
+  }
+
+  notifySubscribers() {
+    this.subscribers.forEach((subscriber) => subscriber.render());
   }
 }
 
 class TaskList {
-  tasks;
-  constructor() {
-    this.tasks = [];
+  store;
+
+  constructor(store) {
+    this.store = store;
   }
 
   addTask(task) {
-    this.tasks.push(task);
+    this.store.dispatch({ type: "ADD_TASK", payload: task });
   }
 
   deleteTask(taskId) {
-    this.tasks = this.tasks.filter((task) => task.id !== Number(taskId));
+    this.store.dispatch({ type: "DELETE_TASK", payload: taskId });
+  }
+
+  toggleTaskStatus(taskId) {
+    this.store.dispatch({ type: "TOGGLE_TASK_STATUS", payload: taskId });
+  }
+
+  editTask(taskId, text) {
+    this.store.dispatch({ type: "EDIT_TASK", payload: { id: taskId, text } });
+  }
+
+  clearCompleted() {
+    this.store.dispatch({ type: "CLEAR_COMPLETED" });
+  }
+
+  getTasks() {
+    return this.store.getState().tasks;
   }
 }
 
 class UserAccount {
   taskList;
-  constructor(username, password) {
+  store;
+
+  constructor(username, password, initialTasks = []) {
     this.username = username;
     this.password = password;
-    this.taskList = new TaskList();
+    this.store = new Store({ tasks: initialTasks }, new TaskReducer());
+    this.taskList = new TaskList(this.store);
+  }
+
+  getStore() {
+    return this.store;
   }
 }
 
@@ -54,17 +145,21 @@ class AccountManager {
   }
 
   saveAccounts() {
-    localStorage.setItem("accounts", JSON.stringify(this.accounts));
+    const accountsToSave = this.accounts.map((account) => ({
+      username: account.username,
+      password: account.password,
+      tasks: account.taskList.getTasks(),
+    }));
+    localStorage.setItem("accounts", JSON.stringify(accountsToSave));
   }
 
   loadAccounts() {
     const storedAccounts = JSON.parse(localStorage.getItem("accounts")) || [];
     return storedAccounts.map((acc) => {
-      const user = new UserAccount(acc.username, acc.password);
-      user.taskList.tasks = acc.taskList.tasks.map(
+      const initialTasks = (acc.tasks || []).map(
         (task) => new Task(task.task, task.id, task.status),
       );
-      return user;
+      return new UserAccount(acc.username, acc.password, initialTasks);
     });
   }
 
@@ -87,7 +182,6 @@ class AccountManager {
         "Username must be 3-20 characters long, start with a letter, and contain only Latin letters, digits, and '_'.";
       return false;
     }
-
     return true;
   }
 
@@ -207,6 +301,7 @@ class App {
       this.loginFormContainer.style.display = "none";
 
       this.currentAccount = acc;
+      this.currentAccount.getStore().subscribe(this);
       this.render();
     });
 
@@ -279,10 +374,8 @@ class App {
     });
 
     this.button.clearBtn.addEventListener("click", () => {
-      this.currentAccount.taskList.tasks =
-        this.currentAccount.taskList.tasks.filter(
-          (task) => task.status === "pending",
-        );
+      this.currentAccount.taskList.clearCompleted();
+      this.accManager.saveAccounts();
       this.render();
     });
 
@@ -300,7 +393,7 @@ class App {
     this.button.okBtn.addEventListener("click", () => {
       const taskId = this.editTaskContainer.dataset.editId;
       this.handleEditTask(taskId);
-      this.toggleEditModal();
+      this.closeEditModal();
       this.render();
     });
 
@@ -314,7 +407,7 @@ class App {
       if (e.key === "Enter") {
         const taskId = this.editTaskContainer.dataset.editId;
         this.handleEditTask(taskId);
-        this.toggleEditModal();
+        this.closeEditModal();
         this.render();
       }
     });
@@ -325,19 +418,20 @@ class App {
 
       const taskContainer = target.closest(".task-container");
       const taskId = taskContainer.dataset.taskId;
-      const task = this.currentAccount.taskList.tasks.find(
-        (t) => t.id === Number(taskId),
-      );
 
       if (target.classList.contains("toggle-btn")) {
-        this.toggleTaskStatus(task);
+        this.currentAccount.taskList.toggleTaskStatus(taskId);
       } else if (target.classList.contains("delete-btn")) {
         this.handleDeleteTask(taskId);
       } else if (target.classList.contains("edit-btn")) {
         this.toggleEditModal();
+        const task = this.currentAccount.taskList
+          .getTasks()
+          .find((t) => t.id === Number(taskId));
         this.input.editTaskInput.value = task.task;
         this.editTaskContainer.dataset.editId = taskId;
       }
+      this.accManager.saveAccounts();
     });
 
     this.render();
@@ -356,16 +450,6 @@ class App {
     this.render();
   }
 
-  toggleTaskStatus(task) {
-    if (task.status === "pending") {
-      task.markAsDone();
-    } else {
-      task.markAsPending();
-    }
-    this.accManager.saveAccounts();
-    this.render();
-  }
-
   handleDeleteTask(taskId) {
     this.currentAccount.taskList.deleteTask(taskId);
     this.accManager.saveAccounts();
@@ -379,24 +463,24 @@ class App {
     const editedText =
       editTaskInputValue.trim()[0].toUpperCase() + editTaskInputValue.slice(1);
 
-    const task = this.currentAccount.taskList.tasks.find(
-      (t) => t.id === Number(taskId),
-    );
-
-    task.task = editedText;
+    this.currentAccount.taskList.editTask(taskId, editedText);
     this.accManager.saveAccounts();
   }
 
   toggleEditModal() {
     if (this.overlay.classList.contains("active")) {
-      this.overlay.classList.remove("active");
-      this.editTaskContainer.classList.remove("active");
-      this.button.closeBtn.classList.remove("active");
+      this.closeEditModal();
     } else {
       this.overlay.classList.add("active");
       this.editTaskContainer.classList.add("active");
       this.button.closeBtn.classList.add("active");
     }
+  }
+
+  closeEditModal() {
+    this.overlay.classList.remove("active");
+    this.editTaskContainer.classList.remove("active");
+    this.button.closeBtn.classList.remove("active");
   }
 
   toggleForm() {
@@ -474,9 +558,9 @@ class App {
   render() {
     this.taskListContainer.innerHTML = "";
 
-    if (!this.currentAccount?.taskList?.tasks?.length) return;
+    if (!this.currentAccount?.taskList?.getTasks()?.length) return;
 
-    this.currentAccount.taskList.tasks.forEach((task) => {
+    this.currentAccount.taskList.getTasks().forEach((task) => {
       const taskDiv = document.createElement("div");
       taskDiv.classList.add("task-container");
       if (task.status === "done") taskDiv.classList.add("completed");
